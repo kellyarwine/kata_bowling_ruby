@@ -1,68 +1,43 @@
+require 'scorer'
+
 class Game
-  attr_accessor :score
+  attr_accessor :scorer
 
   def initialize
-    @score = 0
-    @itsThrows = []
-    @index = 0
     @itsCurrentFrame = 1
-    @firstthrow = true
+    @firstthrowinframe = true
+    @scorer = Scorer.new
   end
 
   def add(pins)
-    @itsThrows[@index] = pins
-    @index += 1
-    @score += pins
+    @scorer.add_throw(pins)
     adjust_current_frame(pins)
   end
 
   def adjust_current_frame(pins)
-    if (@firstthrow == true)
-      if pins == 10
-        @itsCurrentFrame += 1
-      else
-        @firstthrow = false
-      end
+    if last_ball_in_frame(pins)
+        advance_frame
+        @firstthrowinframe = true
     else
-      @firstthrow = true
-      @itsCurrentFrame += 1
+      @firstthrowinframe = false
     end
 
-    @itsCurrentFrame = [11, @itsCurrentFrame].min
   end
 
-  def score_for_frame(frame)
-    index = -1
-    current_frame = 0
-    score = 0
-
-    while current_frame < frame
-      # require 'pry'
-      # binding.pry
-
-      throw_1 = @itsThrows[index+=1]
-
-      if throw_1 == 10
-        score += throw_1 + @itsThrows[index+1] + @itsThrows[index+2]
-      else
-        throw_2 = @itsThrows[index+=1]
-        score += throw_1 + throw_2
-
-        score += @itsThrows[index+1] if throw_1 + throw_2 == 10
-      end
-
-      current_frame += 1
-    end
-
-    score
+  def last_ball_in_frame(pins)
+    strike?(pins) || @firstthrowinframe == false
   end
 
-  def get_current_frame
-    @itsCurrentFrame
+  def strike?(pins)
+    @firstthrowinframe && pins == 10
+  end
+
+  def advance_frame
+    @itsCurrentFrame = [11, @itsCurrentFrame+1].min
   end
 
   def calculate_score
-    score_for_frame(get_current_frame-1)
+    @scorer.score_for_frame(@itsCurrentFrame-1)
   end
 
 end
